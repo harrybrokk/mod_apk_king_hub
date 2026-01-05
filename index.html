@@ -23,7 +23,6 @@
             background-image: radial-gradient(circle at top right, #0a172d, transparent);
         }
 
-        /* --- Hero Slider --- */
         .hero {
             width: 100%; height: 100vh; position: relative;
             display: flex; align-items: flex-end; padding: 0 5% 100px;
@@ -55,7 +54,6 @@
 
         .btn-play:hover { background: var(--accent); color: #000; box-shadow: 0 0 30px rgba(0, 242, 255, 0.4); transform: scale(1.05); }
 
-        /* --- Discovery Grid --- */
         .section-title { padding: 50px 5% 20px; font-size: 1.4rem; font-weight: 600; opacity: 0.9; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 0 5% 100px; }
 
@@ -74,7 +72,7 @@
         .info { padding: 15px; }
         .info h3 { font-size: 0.9rem; font-weight: 500; color: rgba(255,255,255,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* --- Pure Full Screen Player --- */
+        /* --- Player Modal Fix --- */
         #videoModal {
             position: fixed; inset: 0; background: #000; z-index: 2000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -82,32 +80,25 @@
 
         .modal-content {
             width: 100%; height: 100%; 
-            position: relative;
-            background: #000;
+            position: relative; background: #000;
             display: flex; align-items: center; justify-content: center;
         }
 
-        iframe {
-            width: 100%; height: 100%; border: none;
-            /* touch fixes */
-            pointer-events: auto;
-        }
+        iframe { width: 100%; height: 100%; border: none; pointer-events: auto; }
 
-        /* Bottom Center Close Button - Tiny & Elegant */
+        /* Moved Close Button Higher to avoid blocking seek bar */
         .close-modal-btn {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
+            position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            color: #fff; width: 45px; height: 45px; border-radius: 50%;
+            color: #fff; width: 40px; height: 40px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 2100;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 18px; transition: 0.3s;
+            cursor: pointer; z-index: 2500;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 16px; transition: 0.3s; opacity: 1;
         }
 
-        .close-modal-btn:hover {
-            background: #ef4444; border-color: #ef4444; transform: translateX(-50%) scale(1.1);
-        }
+        .close-modal-btn:hover { background: #ef4444; border-color: #ef4444; }
     </style>
 </head>
 <body>
@@ -121,18 +112,17 @@
     <h2 class="section-title">Explore Latest</h2>
     <div class="grid" id="video-grid"></div>
 
-    <!-- Video Player -->
-    <div id="videoModal">
+    <div id="videoModal" onclick="showControlsTemporarily()">
         <div class="modal-content">
             <iframe id="videoFrame" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
         </div>
-        <!-- Simple Close Button at Bottom Center -->
-        <div class="close-modal-btn" onclick="closeVideo()"><i class="fa-solid fa-xmark"></i></div>
+        <!-- Close Button positioned higher -->
+        <div class="close-modal-btn" id="closeBtn" onclick="closeVideo(event)"><i class="fa-solid fa-xmark"></i></div>
     </div>
 
     <script>
         const _supabase = supabase.createClient("https://vsdfngyrwrwgxkpiagbj.supabase.co", "sb_publishable_-aOW0IJWFMVc5yF-2p32sA_uasp8myL");
-        let allVideos = [], heroIndex = 0;
+        let allVideos = [], heroIndex = 0, hideTimeout;
 
         async function fetchVideos() {
             const { data } = await _supabase.from('videos').select('*').order('created_at', { ascending: false });
@@ -165,16 +155,42 @@
 
         function openVideo(url) {
             const embedUrl = url.replace("streamable.com/", "streamable.com/e/");
-            // Simple Clean Embed with autoplay
+            const modal = document.getElementById('videoModal');
             document.getElementById('videoFrame').src = embedUrl + "?autoplay=1";
-            document.getElementById('videoModal').style.display = "flex";
+            modal.style.display = "flex";
             document.body.style.overflow = "hidden";
+
+            // Attempt to trigger native fullscreen
+            if (modal.requestFullscreen) {
+                modal.requestFullscreen();
+            } else if (modal.webkitRequestFullscreen) {
+                modal.webkitRequestFullscreen();
+            }
+
+            showControlsTemporarily();
         }
 
-        function closeVideo() {
+        function closeVideo(e) {
+            if(e) e.stopPropagation();
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
             document.getElementById('videoFrame').src = "";
             document.getElementById('videoModal').style.display = "none";
             document.body.style.overflow = "auto";
+        }
+
+        // Auto-hide 'X' button logic
+        function showControlsTemporarily() {
+            const btn = document.getElementById('closeBtn');
+            btn.style.opacity = "1";
+            btn.style.pointerEvents = "auto";
+            
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                btn.style.opacity = "0";
+                btn.style.pointerEvents = "none";
+            }, 3000);
         }
 
         fetchVideos();
