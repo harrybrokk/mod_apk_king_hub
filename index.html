@@ -23,12 +23,12 @@
             background-image: radial-gradient(circle at top right, #0a172d, transparent);
         }
 
+        /* --- Hero --- */
         .hero {
             width: 100%; height: 100vh; position: relative;
             display: flex; align-items: flex-end; padding: 0 5% 100px;
             overflow: hidden; background-size: cover; background-position: center;
             transition: background-image 1.2s ease-in-out;
-            will-change: background-image;
         }
 
         .hero::after {
@@ -52,8 +52,7 @@
             text-transform: uppercase; letter-spacing: 1.5px;
         }
 
-        .btn-play:hover { background: var(--accent); color: #000; box-shadow: 0 0 30px rgba(0, 242, 255, 0.4); transform: scale(1.05); }
-
+        /* --- Grid --- */
         .section-title { padding: 50px 5% 20px; font-size: 1.4rem; font-weight: 600; opacity: 0.9; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 0 5% 100px; }
 
@@ -62,46 +61,49 @@
             border: 1px solid var(--glass-border); backdrop-filter: blur(10px);
             transition: 0.4s; cursor: pointer;
         }
-
-        .video-card:hover { transform: translateY(-8px); border-color: var(--accent); }
         .thumb-container { width: 100%; aspect-ratio: 16/9; position: relative; background: #000; }
         .thumb-container img { width: 100%; height: 100%; object-fit: cover; }
-        .play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); opacity: 0; transition: 0.3s; }
-        .video-card:hover .play-overlay { opacity: 1; }
-        .play-overlay i { font-size: 40px; color: var(--accent); }
         .info { padding: 15px; }
         .info h3 { font-size: 0.9rem; font-weight: 500; color: rgba(255,255,255,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* --- Player Modal Fix --- */
+        /* --- Smart Cropped Player --- */
         #videoModal {
             position: fixed; inset: 0; background: #000; z-index: 2000;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
+            display: none; align-items: center; justify-content: center;
+            overflow: hidden; /* Important for cropping */
         }
 
         .modal-content {
             width: 100%; height: 100%; 
-            position: relative; background: #000;
+            position: relative;
             display: flex; align-items: center; justify-content: center;
         }
 
-        iframe { width: 100%; height: 100%; border: none; pointer-events: auto; }
+        /* Technique: Scale up to hide logo (top) and bar (bottom) */
+        iframe {
+            width: 110%; /* Slightly wider */
+            height: 120%; /* Much taller to push bar down */
+            border: none;
+            position: absolute;
+            top: -10%; /* Move up to hide top logo */
+            pointer-events: auto;
+        }
 
-        /* Moved Close Button Higher to avoid blocking seek bar */
-        .close-modal-btn {
-            position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+        /* Clean Mini Close Button */
+        .close-btn {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
             color: #fff; width: 40px; height: 40px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; z-index: 2500;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            font-size: 16px; transition: 0.3s; opacity: 1;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 16px; transition: 0.3s; opacity: 0; pointer-events: none;
         }
 
-        .close-modal-btn:hover { background: #ef4444; border-color: #ef4444; }
+        .close-btn.visible { opacity: 1; pointer-events: auto; }
     </style>
 </head>
-<body>
+<body onclick="handleGlobalTouch()">
 
     <div id="hero-section" class="hero">
         <div class="hero-content" id="hero-content">
@@ -109,15 +111,16 @@
         </div>
     </div>
 
-    <h2 class="section-title">Explore Latest</h2>
+    <h2 class="section-title">Discovery</h2>
     <div class="grid" id="video-grid"></div>
 
-    <div id="videoModal" onclick="showControlsTemporarily()">
+    <!-- Smart Cropped Player -->
+    <div id="videoModal">
         <div class="modal-content">
-            <iframe id="videoFrame" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
+            <!-- controls=0 added to link as first layer of defense -->
+            <iframe id="videoFrame" src="" allow="autoplay; fullscreen"></iframe>
         </div>
-        <!-- Close Button positioned higher -->
-        <div class="close-modal-btn" id="closeBtn" onclick="closeVideo(event)"><i class="fa-solid fa-xmark"></i></div>
+        <div class="close-btn" id="closeBtn" onclick="closeVideo(event)"><i class="fa-solid fa-xmark"></i></div>
     </div>
 
     <script>
@@ -148,49 +151,38 @@
         function renderGrid(videos) {
             document.getElementById('video-grid').innerHTML = videos.map(v => `
                 <div class="video-card" onclick="openVideo('${v.video_url}')">
-                    <div class="thumb-container"><img src="${v.thumbnail}" loading="lazy"><div class="play-overlay"><i class="fa-solid fa-play"></i></div></div>
+                    <div class="thumb-container"><img src="${v.thumbnail}" loading="lazy"></div>
                     <div class="info"><h3>${v.title}</h3></div>
                 </div>`).join('');
         }
 
         function openVideo(url) {
             const embedUrl = url.replace("streamable.com/", "streamable.com/e/");
-            const modal = document.getElementById('videoModal');
-            document.getElementById('videoFrame').src = embedUrl + "?autoplay=1";
-            modal.style.display = "flex";
+            // controls=0 and loop=1 for a cleaner loop
+            document.getElementById('videoFrame').src = embedUrl + "?autoplay=1&controls=0&loop=1";
+            document.getElementById('videoModal').style.display = "flex";
             document.body.style.overflow = "hidden";
-
-            // Attempt to trigger native fullscreen
-            if (modal.requestFullscreen) {
-                modal.requestFullscreen();
-            } else if (modal.webkitRequestFullscreen) {
-                modal.webkitRequestFullscreen();
-            }
-
-            showControlsTemporarily();
+            showCloseButton();
         }
 
         function closeVideo(e) {
             if(e) e.stopPropagation();
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            }
             document.getElementById('videoFrame').src = "";
             document.getElementById('videoModal').style.display = "none";
             document.body.style.overflow = "auto";
         }
 
-        // Auto-hide 'X' button logic
-        function showControlsTemporarily() {
+        function handleGlobalTouch() {
+            if(document.getElementById('videoModal').style.display === "flex") {
+                showCloseButton();
+            }
+        }
+
+        function showCloseButton() {
             const btn = document.getElementById('closeBtn');
-            btn.style.opacity = "1";
-            btn.style.pointerEvents = "auto";
-            
+            btn.classList.add('visible');
             clearTimeout(hideTimeout);
-            hideTimeout = setTimeout(() => {
-                btn.style.opacity = "0";
-                btn.style.pointerEvents = "none";
-            }, 3000);
+            hideTimeout = setTimeout(() => { btn.classList.remove('visible'); }, 3000);
         }
 
         fetchVideos();
