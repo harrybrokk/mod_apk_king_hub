@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Ultra Pro</title>
+    <title>StreamHub Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
@@ -23,11 +23,12 @@
             background-image: radial-gradient(circle at top right, #0a172d, transparent);
         }
 
+        /* --- Hero Slider --- */
         .hero {
             width: 100%; height: 100vh; position: relative;
             display: flex; align-items: flex-end; padding: 0 5% 100px;
             overflow: hidden; background-size: cover; background-position: center;
-            transition: background-image 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: background-image 1.2s ease-in-out;
             will-change: background-image;
         }
 
@@ -42,10 +43,10 @@
             transition: opacity 1.2s ease, transform 1.2s ease;
         }
 
-        .hero-content.fade-out { opacity: 0; transform: translate3d(0, 10px, 0); }
+        .hero-content.fade-out { opacity: 0; transform: translateY(15px); }
 
         .btn-play {
-            padding: 16px 40px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px);
+            padding: 16px 45px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px); color: #fff; border: 1px solid var(--glass-border);
             border-radius: 50px; font-weight: 700; cursor: pointer; display: inline-flex; 
             align-items: center; gap: 12px; font-size: 1rem; transition: 0.4s;
@@ -54,6 +55,7 @@
 
         .btn-play:hover { background: var(--accent); color: #000; box-shadow: 0 0 30px rgba(0, 242, 255, 0.4); transform: scale(1.05); }
 
+        /* --- Discovery Grid --- */
         .section-title { padding: 50px 5% 20px; font-size: 1.4rem; font-weight: 600; opacity: 0.9; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 0 5% 100px; }
 
@@ -63,7 +65,7 @@
             transition: 0.4s; cursor: pointer;
         }
 
-        .video-card:hover { transform: translate3d(0, -8px, 0); border-color: var(--accent); }
+        .video-card:hover { transform: translateY(-8px); border-color: var(--accent); }
         .thumb-container { width: 100%; aspect-ratio: 16/9; position: relative; background: #000; }
         .thumb-container img { width: 100%; height: 100%; object-fit: cover; }
         .play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); opacity: 0; transition: 0.3s; }
@@ -72,55 +74,43 @@
         .info { padding: 15px; }
         .info h3 { font-size: 0.9rem; font-weight: 500; color: rgba(255,255,255,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        
+        /* --- Pure Full Screen Player --- */
         #videoModal {
             position: fixed; inset: 0; background: #000; z-index: 2000;
-            display: none; align-items: center; justify-content: center;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        
         .modal-content {
-            position: relative; overflow: hidden;
-            background: #000; transition: all 0.5s ease;
+            width: 100%; height: 100%; 
+            position: relative;
+            background: #000;
             display: flex; align-items: center; justify-content: center;
         }
 
-        .modal-content.horizontal { width: 100%; height: 100%; }
-        .modal-content.vertical { width: auto; height: 100%; aspect-ratio: 9/16; }
-
-        
         iframe {
-            width: 104%; height: 110%; 
-            border: none; position: absolute;
-            top: -5%; left: -2%; 
-            pointer-events: auto; 
+            width: 100%; height: 100%; border: none;
+            /* touch fixes */
+            pointer-events: auto;
         }
 
-        
-        .player-ui-layer {
-            position: absolute; inset: 0;
-            pointer-events: none; 
-            z-index: 2100;
-        }
-
-        .player-controls {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 20px; pointer-events: auto; 
-            transition: opacity 0.5s ease; opacity: 1;
-        }
-
-        .ctrl-btn {
-            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px);
+        /* Bottom Center Close Button - Tiny & Elegant */
+        .close-modal-btn {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             color: #fff; width: 45px; height: 45px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; border: 1px solid rgba(255,255,255,0.2); font-size: 18px;
+            cursor: pointer; z-index: 2100;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 18px; transition: 0.3s;
         }
 
-        .ctrl-btn:hover { background: var(--accent); color: #000; }
-        .close-btn:hover { background: #ef4444; color: #fff; }
+        .close-modal-btn:hover {
+            background: #ef4444; border-color: #ef4444; transform: translateX(-50%) scale(1.1);
+        }
     </style>
 </head>
-<body onclick="handleGlobalTouch()">
+<body>
 
     <div id="hero-section" class="hero">
         <div class="hero-content" id="hero-content">
@@ -128,27 +118,21 @@
         </div>
     </div>
 
-    <h2 class="section-title">Explore</h2>
+    <h2 class="section-title">Explore Latest</h2>
     <div class="grid" id="video-grid"></div>
 
-    
+    <!-- Video Player -->
     <div id="videoModal">
-        <div class="modal-content horizontal" id="modalFrameContainer">
-            <iframe id="videoFrame" src="" allow="autoplay; fullscreen"></iframe>
+        <div class="modal-content">
+            <iframe id="videoFrame" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
         </div>
-
-        
-        <div class="player-ui-layer">
-            <div class="player-controls" id="playerControls">
-                <div class="ctrl-btn" onclick="toggleOrientation(event)"><i class="fa-solid fa-rotate"></i></div>
-                <div class="ctrl-btn close-btn" onclick="closeVideo(event)"><i class="fa-solid fa-xmark"></i></div>
-            </div>
-        </div>
+        <!-- Simple Close Button at Bottom Center -->
+        <div class="close-modal-btn" onclick="closeVideo()"><i class="fa-solid fa-xmark"></i></div>
     </div>
 
     <script>
         const _supabase = supabase.createClient("https://vsdfngyrwrwgxkpiagbj.supabase.co", "sb_publishable_-aOW0IJWFMVc5yF-2p32sA_uasp8myL");
-        let allVideos = [], heroIndex = 0, controlTimeout;
+        let allVideos = [], heroIndex = 0;
 
         async function fetchVideos() {
             const { data } = await _supabase.from('videos').select('*').order('created_at', { ascending: false });
@@ -181,43 +165,16 @@
 
         function openVideo(url) {
             const embedUrl = url.replace("streamable.com/", "streamable.com/e/");
-            document.getElementById('videoFrame').src = embedUrl + "?autoplay=1&controls=1"; 
+            // Simple Clean Embed with autoplay
+            document.getElementById('videoFrame').src = embedUrl + "?autoplay=1";
             document.getElementById('videoModal').style.display = "flex";
             document.body.style.overflow = "hidden";
-            resetControlTimer();
         }
 
-        function closeVideo(e) {
-            if(e) e.stopPropagation();
+        function closeVideo() {
             document.getElementById('videoFrame').src = "";
             document.getElementById('videoModal').style.display = "none";
             document.body.style.overflow = "auto";
-        }
-
-        function toggleOrientation(e) {
-            e.stopPropagation();
-            const container = document.getElementById('modalFrameContainer');
-            container.classList.toggle('horizontal');
-            container.classList.toggle('vertical');
-            resetControlTimer();
-        }
-
-        
-        function handleGlobalTouch() {
-            if(document.getElementById('videoModal').style.display === "flex") {
-                resetControlTimer();
-            }
-        }
-
-        function resetControlTimer() {
-            const controls = document.getElementById('playerControls');
-            controls.style.opacity = "1";
-            controls.style.pointerEvents = "auto";
-            clearTimeout(controlTimeout);
-            controlTimeout = setTimeout(() => {
-                controls.style.opacity = "0";
-                controls.style.pointerEvents = "none";
-            }, 3000);
         }
 
         fetchVideos();
