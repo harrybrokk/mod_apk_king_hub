@@ -23,7 +23,6 @@
             background-image: radial-gradient(circle at top right, #0a172d, transparent);
         }
 
-        /* --- Hero --- */
         .hero {
             width: 100%; height: 100vh; position: relative;
             display: flex; align-items: flex-end; padding: 0 5% 100px;
@@ -41,44 +40,30 @@
         .hero-content {
             position: relative; z-index: 10;
             transition: opacity 1.2s ease, transform 1.2s ease;
-            will-change: transform, opacity;
         }
 
         .hero-content.fade-out { opacity: 0; transform: translate3d(0, 10px, 0); }
 
-        
         .btn-play {
-            padding: 16px 40px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            color: #fff;
-            border: 1px solid var(--glass-border);
-            border-radius: 50px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex; align-items: center; gap: 12px;
-            font-size: 1rem;
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 16px 40px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px); color: #fff; border: 1px solid var(--glass-border);
+            border-radius: 50px; font-weight: 700; cursor: pointer; display: inline-flex; 
+            align-items: center; gap: 12px; font-size: 1rem; transition: 0.4s;
             text-transform: uppercase; letter-spacing: 1.5px;
         }
 
-        .btn-play:hover {
-            background: var(--accent); color: #000; border-color: var(--accent);
-            box-shadow: 0 0 30px rgba(0, 242, 255, 0.4); transform: scale(1.05);
-        }
+        .btn-play:hover { background: var(--accent); color: #000; box-shadow: 0 0 30px rgba(0, 242, 255, 0.4); transform: scale(1.05); }
 
-        
         .section-title { padding: 50px 5% 20px; font-size: 1.4rem; font-weight: 600; opacity: 0.9; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 0 5% 100px; }
 
         .video-card {
             background: var(--glass); border-radius: 15px; overflow: hidden;
             border: 1px solid var(--glass-border); backdrop-filter: blur(10px);
-            transition: 0.4s; cursor: pointer; will-change: transform;
+            transition: 0.4s; cursor: pointer;
         }
 
-        .video-card:hover { transform: translate3d(0, -8px, 0); border-color: var(--accent); box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
+        .video-card:hover { transform: translate3d(0, -8px, 0); border-color: var(--accent); }
         .thumb-container { width: 100%; aspect-ratio: 16/9; position: relative; background: #000; }
         .thumb-container img { width: 100%; height: 100%; object-fit: cover; }
         .play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); opacity: 0; transition: 0.3s; }
@@ -91,94 +76,88 @@
         #videoModal {
             position: fixed; inset: 0; background: #000; z-index: 2000;
             display: none; align-items: center; justify-content: center;
-            transition: opacity 0.4s;
         }
 
+        
         .modal-content {
-            width: 100%; height: 100%; position: relative;
+            position: relative; overflow: hidden;
+            background: #000; transition: all 0.5s ease;
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-content.horizontal { width: 100%; height: 100%; }
+        .modal-content.vertical { width: auto; height: 100%; aspect-ratio: 9/16; }
+
+        
+        iframe {
+            width: 104%; height: 110%; 
+            border: none; position: absolute;
+            top: -5%; left: -2%; 
+            pointer-events: auto; 
         }
 
         
-        .modal-content.horizontal { width: 100%; height: 100%; }
-        .modal-content.vertical { width: auto; height: 100%; aspect-ratio: 9/16; max-width: 100%; }
+        .player-ui-layer {
+            position: absolute; inset: 0;
+            pointer-events: none; 
+            z-index: 2100;
+        }
 
-        iframe { width: 100%; height: 100%; border: none; }
-
-        
         .player-controls {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 20px; z-index: 2100;
-            transition: opacity 0.5s ease;
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 20px; pointer-events: auto; 
+            transition: opacity 0.5s ease; opacity: 1;
         }
 
         .ctrl-btn {
-            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px);
             color: #fff; width: 45px; height: 45px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; border: 1px solid rgba(255,255,255,0.2);
-            font-size: 18px; transition: 0.3s;
+            cursor: pointer; border: 1px solid rgba(255,255,255,0.2); font-size: 18px;
         }
 
-        .ctrl-btn:hover { background: var(--accent); color: #000; transform: scale(1.1); }
+        .ctrl-btn:hover { background: var(--accent); color: #000; }
         .close-btn:hover { background: #ef4444; color: #fff; }
     </style>
 </head>
-<body>
+<body onclick="handleGlobalTouch()">
 
     <div id="hero-section" class="hero">
         <div class="hero-content" id="hero-content">
-            <button class="btn-play" id="hero-btn">
-                <i class="fa-solid fa-play"></i> Watch Now
-            </button>
+            <button class="btn-play" id="hero-btn"><i class="fa-solid fa-play"></i> Watch Now</button>
         </div>
     </div>
 
     <h2 class="section-title">Explore</h2>
     <div class="grid" id="video-grid"></div>
 
-    <!-- Smart Player Modal -->
-    <div id="videoModal" onclick="handlePlayerInteraction()">
+    
+    <div id="videoModal">
         <div class="modal-content horizontal" id="modalFrameContainer">
             <iframe id="videoFrame" src="" allow="autoplay; fullscreen"></iframe>
         </div>
 
-        <div class="player-controls" id="playerControls">
-            <div class="ctrl-btn" onclick="toggleOrientation(event)" title="Change View">
-                <i class="fa-solid fa-rotate"></i>
-            </div>
-            <div class="ctrl-btn close-btn" onclick="closeVideo(event)" title="Close">
-                <i class="fa-solid fa-xmark"></i>
+        
+        <div class="player-ui-layer">
+            <div class="player-controls" id="playerControls">
+                <div class="ctrl-btn" onclick="toggleOrientation(event)"><i class="fa-solid fa-rotate"></i></div>
+                <div class="ctrl-btn close-btn" onclick="closeVideo(event)"><i class="fa-solid fa-xmark"></i></div>
             </div>
         </div>
     </div>
 
     <script>
-        const _supabase = supabase.createClient(
-            "https://vsdfngyrwrwgxkpiagbj.supabase.co", 
-            "sb_publishable_-aOW0IJWFMVc5yF-2p32sA_uasp8myL"
-        );
-
-        let allVideos = [];
-        let heroIndex = 0;
-        let controlTimeout;
+        const _supabase = supabase.createClient("https://vsdfngyrwrwgxkpiagbj.supabase.co", "sb_publishable_-aOW0IJWFMVc5yF-2p32sA_uasp8myL");
+        let allVideos = [], heroIndex = 0, controlTimeout;
 
         async function fetchVideos() {
             const { data } = await _supabase.from('videos').select('*').order('created_at', { ascending: false });
-            if (data && data.length > 0) {
-                allVideos = data;
-                renderGrid(data);
-                startHeroSlider();
-            }
+            if (data && data.length > 0) { allVideos = data; renderGrid(data); startHeroSlider(); }
         }
 
         function startHeroSlider() {
             updateHero(0);
-            setInterval(() => {
-                heroIndex = (heroIndex + 1) % Math.min(allVideos.length, 5);
-                updateHero(heroIndex);
-            }, 6000);
+            setInterval(() => { heroIndex = (heroIndex + 1) % Math.min(allVideos.length, 5); updateHero(heroIndex); }, 6000);
         }
 
         function updateHero(index) {
@@ -193,21 +172,16 @@
         }
 
         function renderGrid(videos) {
-            const grid = document.getElementById('video-grid');
-            grid.innerHTML = videos.map(v => `
+            document.getElementById('video-grid').innerHTML = videos.map(v => `
                 <div class="video-card" onclick="openVideo('${v.video_url}')">
-                    <div class="thumb-container">
-                        <img src="${v.thumbnail}" loading="lazy">
-                        <div class="play-overlay"><i class="fa-solid fa-play"></i></div>
-                    </div>
+                    <div class="thumb-container"><img src="${v.thumbnail}" loading="lazy"><div class="play-overlay"><i class="fa-solid fa-play"></i></div></div>
                     <div class="info"><h3>${v.title}</h3></div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         function openVideo(url) {
             const embedUrl = url.replace("streamable.com/", "streamable.com/e/");
-            document.getElementById('videoFrame').src = embedUrl + "?autoplay=1";
+            document.getElementById('videoFrame').src = embedUrl + "?autoplay=1&controls=1"; 
             document.getElementById('videoModal').style.display = "flex";
             document.body.style.overflow = "hidden";
             resetControlTimer();
@@ -223,24 +197,22 @@
         function toggleOrientation(e) {
             e.stopPropagation();
             const container = document.getElementById('modalFrameContainer');
-            if(container.classList.contains('horizontal')) {
-                container.classList.replace('horizontal', 'vertical');
-            } else {
-                container.classList.replace('vertical', 'horizontal');
-            }
+            container.classList.toggle('horizontal');
+            container.classList.toggle('vertical');
             resetControlTimer();
         }
 
         
-        function handlePlayerInteraction() {
-            resetControlTimer();
+        function handleGlobalTouch() {
+            if(document.getElementById('videoModal').style.display === "flex") {
+                resetControlTimer();
+            }
         }
 
         function resetControlTimer() {
             const controls = document.getElementById('playerControls');
             controls.style.opacity = "1";
             controls.style.pointerEvents = "auto";
-            
             clearTimeout(controlTimeout);
             controlTimeout = setTimeout(() => {
                 controls.style.opacity = "0";
