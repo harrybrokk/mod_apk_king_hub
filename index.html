@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StreamHub Pro</title>
+    <title>Mod King Hub</title>
+    
+    <!-- टेलीग्राम वेब ऐप स्क्रिप्ट -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --bg: #030b17;
@@ -30,39 +35,55 @@
         .thumb-container img { width: 100%; height: 100%; object-fit: cover; }
         .info { padding: 15px; }
         .info h3 { font-size: 0.9rem; font-weight: 500; color: rgba(255,255,255,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #videoModal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 2000; display: none; align-items: center; justify-content: center; transition: opacity 0.4s; }
-        .modal-box { width: 92%; max-width: 900px; aspect-ratio: 16/9; position: relative; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid var(--accent); box-shadow: 0 0 40px rgba(0, 0, 0, 0.5); }
-        iframe { width: 100%; height: 100%; border: none; }
-        .close-btn { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2500; border: 1px solid rgba(255, 255, 255, 0.2); font-size: 18px; transition: 0.3s; opacity: 0; pointer-events: none; }
+        #videoModal { position: fixed; inset: 0; background: #000; z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .modal-box { width: 100%; height: 100%; position: relative; background: #000; overflow: hidden; }
+        iframe { width: 100%; height: 100%; border: none; z-index: 1; }
+        .logo-mask { position: absolute; top: 0; left: 0; width: 180px; height: 50px; background: #000; z-index: 10; pointer-events: none; }
+        .close-btn { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2500; border: 1px solid rgba(255, 255, 255, 0.2); font-size: 18px; transition: 0.3s; opacity: 0; pointer-events: none; }
         .close-btn.visible { opacity: 1; pointer-events: auto; }
         .close-btn:hover { background: #ef4444; border-color: #ef4444; transform: translateX(-50%) scale(1.1); }
     </style>
 </head>
 <body onclick="wakeControls()">
+
     <div id="hero-section" class="hero">
         <div class="hero-content" id="hero-content">
             <button class="btn-play" id="hero-btn"><i class="fa-solid fa-play"></i> Watch Now</button>
         </div>
     </div>
+
     <h2 class="section-title">Discovery</h2>
     <div class="grid" id="video-grid"></div>
+
     <div id="videoModal">
         <div class="modal-box">
+            <div class="logo-mask"></div>
             <iframe id="videoFrame" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
         </div>
         <div class="close-btn" id="closeBtn" onclick="closeVideo(event)"><i class="fa-solid fa-xmark"></i></div>
     </div>
+
     <script>
+        // --- Telegram App Logic ---
+        const tele = window.Telegram.WebApp;
+        tele.ready();
+        tele.expand(); // ऐप को तुरंत पूरी स्क्रीन पर फैलाएं
+        tele.setHeaderColor('#030b17'); // हेडर का रंग साइट के बैकग्राउंड से मैच करें
+        tele.enableClosingConfirmation(); // गलती से बंद होने से पहले पूछेगा
+
         const _supabase = supabase.createClient("https://vsdfngyrwrwgxkpiagbj.supabase.co", "sb_publishable_-aOW0IJWFMVc5yF-2p32sA_uasp8myL");
         let allVideos = [], heroIndex = 0, hideTimer;
+
         async function fetchVideos() {
             const { data } = await _supabase.from('videos').select('*').order('created_at', { ascending: false });
             if (data && data.length > 0) { allVideos = data; renderGrid(data); startHeroSlider(); }
         }
+
         function startHeroSlider() {
             updateHero(0);
             setInterval(() => { heroIndex = (heroIndex + 1) % Math.min(allVideos.length, 5); updateHero(heroIndex); }, 6000);
         }
+
         function updateHero(index) {
             const video = allVideos[index];
             const content = document.getElementById('hero-content');
@@ -73,6 +94,7 @@
                 content.classList.remove('fade-out');
             }, 1200);
         }
+
         function renderGrid(videos) {
             document.getElementById('video-grid').innerHTML = videos.map(v => `
                 <div class="video-card" onclick="openVideo('${v.video_url}')">
@@ -80,6 +102,7 @@
                     <div class="info"><h3>${v.title}</h3></div>
                 </div>`).join('');
         }
+
         function openVideo(url) {
             const embedUrl = url.replace("streamable.com/", "streamable.com/e/");
             document.getElementById('videoFrame').src = embedUrl + "?autoplay=1";
@@ -87,12 +110,14 @@
             document.body.style.overflow = "hidden";
             wakeControls();
         }
+
         function closeVideo(e) {
             if(e) e.stopPropagation();
             document.getElementById('videoFrame').src = "";
             document.getElementById('videoModal').style.display = "none";
             document.body.style.overflow = "auto";
         }
+
         function wakeControls() {
             if(document.getElementById('videoModal').style.display === "flex") {
                 const btn = document.getElementById('closeBtn');
